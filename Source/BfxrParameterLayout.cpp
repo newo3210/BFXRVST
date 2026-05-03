@@ -43,8 +43,8 @@ void apvtsToSfxr (const juce::AudioProcessorValueTreeState& apvts, SfxrParams& o
 
         if (p.uid == "waveType")
         {
-            if (auto* pi = dynamic_cast<juce::AudioParameterInt*> (param))
-                out.setParam (p.uid, (float) pi->convertFrom0to1 (norm));
+            if (auto* pInt = dynamic_cast<juce::AudioParameterInt*> (param))
+                out.setParam (p.uid, (float) pInt->convertFrom0to1 (norm));
         }
         else if (auto* pf = dynamic_cast<juce::AudioParameterFloat*> (param))
         {
@@ -55,18 +55,20 @@ void apvtsToSfxr (const juce::AudioProcessorValueTreeState& apvts, SfxrParams& o
 
 void sfxrToApvts (const SfxrParams& in, juce::AudioProcessorValueTreeState& apvts)
 {
-    for (const auto& p : in.params)
+    SfxrParams copy = in;
+
+    for (const auto& p : copy.params)
     {
         auto* param = apvts.getParameter (p.uid);
         if (param == nullptr)
             continue;
 
-        const float v = in.getParam (p.uid);
+        const float v = copy.getParam (p.uid);
 
         if (p.uid == "waveType")
         {
-            if (auto* pi = dynamic_cast<juce::AudioParameterInt*> (param))
-                pi->setValueNotifyingHost (pi->convertTo0to1 ((int) std::lround (v)));
+            if (auto* pInt = dynamic_cast<juce::AudioParameterInt*> (param))
+                pInt->setValueNotifyingHost (pInt->convertTo0to1 ((float) std::lround (v)));
         }
         else if (auto* pf = dynamic_cast<juce::AudioParameterFloat*> (param))
         {

@@ -56,7 +56,8 @@ target_sources(BfxrAbleton
         Source/PluginEditor.cpp
         Source/BfxrParameterLayout.cpp
         Source/NativeParamsPanel.cpp
-        Source/BfxrWebPanel.cpp)
+        Source/BfxrWebPanel.cpp
+        Source/BfxrWebBridge.cpp)
 
 target_include_directories(BfxrAbleton PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/bfxr")
 

@@ -25,7 +25,7 @@ Referencia web: [increpare/bfxr2](https://github.com/increpare/bfxr2) (MIT). Mot
 | **Sample rate** | FigBug documenta que parte del código asume **44,1 kHz**; el plugin fija el sinte al SR del host. Auditar tono y envolventes a 48 kHz. |
 | **Cambio de parámetros durante el sonido** | Los valores se congelan al inicio del disparo (nota / Play); no hay re-síntesis en vivo por slider. |
 | **bfxr2-only** | Cualquier sinte, preset o flujo que exista solo en el JS de bfxr2 y no en FigBug requiere porte o doble motor. |
-| **Bridge web ↔ APVTS** | La pestaña web es solo vista; no sincroniza aún sliders ni disparo del motor C++. Pendiente: `evaluateJavascript` / funciones nativas JUCE o mensajes para exportar parámetros y disparar `triggerPreview`. |
+| **Bridge web ↔ APVTS** | Botón **Importar web -> motor VST** lee `synth.params` de la pestaña **Bfxr** activa en bfxr2, mapea nombres JS→FigBug y escribe el APVTS. **Play motor VST** dispara el sinte nativo. Sigue sin sincronización automática ni envío VST→web. |
 | **Ocultar pasos en web** | El submódulo incluye el generador de pasos de bfxr2; ocultarlo implica parche JS/CSS en el árbol de `bfxr2` o build fork. |
 
 ## Cómo seguir el checklist

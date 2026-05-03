@@ -24,6 +24,7 @@
 #include <cmath>
 #include <vector>
 
+#include "PinkNumber.h"
 #include "SfxrParams.h"
 
 class SfxrSynth

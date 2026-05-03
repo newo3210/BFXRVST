@@ -1,5 +1,8 @@
 #include "BfxrWebPanel.h"
 
+#include "BfxrWebBridge.h"
+#include "PluginProcessor.h"
+
 namespace
 {
 juce::File resolveBundledBfxr2Root()
@@ -20,7 +23,8 @@ juce::File resolveBundledBfxr2Root()
 }
 } // namespace
 
-BfxrWebPanel::BfxrWebPanel()
+BfxrWebPanel::BfxrWebPanel (BfxrAbletonAudioProcessor& p)
+    : processor (p)
 {
     auto opts = juce::WebBrowserComponent::Options();
 #if JUCE_WINDOWS
@@ -28,6 +32,12 @@ BfxrWebPanel::BfxrWebPanel()
 #endif
     browser = std::make_unique<juce::WebBrowserComponent> (std::move (opts));
     addAndMakeVisible (*browser);
+
+    addAndMakeVisible (btnImport);
+    addAndMakeVisible (btnPlayVst);
+
+    btnImport.onClick = [this] { pullParamsFromWeb(); };
+    btnPlayVst.onClick = [this] { processor.triggerPreview(); };
 }
 
 BfxrWebPanel::~BfxrWebPanel() = default;
@@ -51,6 +61,52 @@ void BfxrWebPanel::tryLoadUrl()
     }
 }
 
+void BfxrWebPanel::injectBridge()
+{
+    if (bridgeInjected || browser == nullptr)
+        return;
+
+    bridgeInjected = true;
+    browser->evaluateJavascript (bfxr_web::getBridgeInjectionScript(), nullptr);
+}
+
+void BfxrWebPanel::pullParamsFromWeb()
+{
+    if (browser == nullptr)
+        return;
+
+    injectBridge();
+
+    const juce::String script = R"JS(
+(function(){
+  try {
+    if (typeof window.__bfxrVstGetActiveSynthParams !== 'function')
+      return '{"error":"no_bridge"}';
+    var p = window.__bfxrVstGetActiveSynthParams();
+    if (!p) return '{"error":"no_bfxr_tab"}';
+    return JSON.stringify(p);
+  } catch (e) {
+    return JSON.stringify({error:String(e)});
+  }
+})()
+)JS";
+
+    browser->evaluateJavascript (script, [this] (const juce::WebBrowserComponent::EvaluationResult& eval) {
+        if (eval.getError() != nullptr)
+            return;
+
+        const auto* res = eval.getResult();
+        if (res == nullptr || ! res->isString())
+            return;
+
+        const juce::String s = res->toString();
+        if (! s.startsWith ("{"))
+            return;
+
+        bfxr_web::applyBfxr2JsonToApvts (s, processor.apvts);
+    });
+}
+
 void BfxrWebPanel::visibilityChanged()
 {
     if (isShowing())
@@ -59,6 +115,11 @@ void BfxrWebPanel::visibilityChanged()
 
 void BfxrWebPanel::resized()
 {
+    auto r = getLocalBounds();
+    auto top = r.removeFromTop (36);
+    btnImport.setBounds (top.removeFromLeft (220).reduced (4, 4));
+    btnPlayVst.setBounds (top.removeFromLeft (140).reduced (4, 4));
+
     if (browser != nullptr)
-        browser->setBounds (getLocalBounds());
+        browser->setBounds (r);
 }

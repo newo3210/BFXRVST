@@ -8,7 +8,8 @@ constexpr int kEditorMinH = 640;
 
 BfxrAbletonAudioProcessorEditor::BfxrAbletonAudioProcessorEditor (BfxrAbletonAudioProcessor& p)
     : AudioProcessorEditor (&p),
-      nativePanel (p)
+      nativePanel (p),
+      webPanel (p)
 {
     setSize (kEditorMinW, kEditorMinH);
     setResizable (true, true);
