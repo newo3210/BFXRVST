@@ -1,0 +1,17 @@
+/build/
+/out/
+/cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.user
+*.suo
+.vs/
+*.VC.db
+*.opensdf
+*.sdf
+x64/
+Win32/
+*.dir/
+JuceLibraryCode/
+*.jucer

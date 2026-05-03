@@ -1,0 +1,3 @@
+[submodule "third_party/bfxr2"]
+	path = third_party/bfxr2
+	url = https://github.com/increpare/bfxr2.git
