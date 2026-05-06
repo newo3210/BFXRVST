@@ -20,6 +20,20 @@ juce::String getBridgeInjectionScript()
     } catch (e) {}
     return null;
   };
+  window.__bfxrVstApplyParamsObject = function(p){
+    try {
+      if (!p || typeof tabs === 'undefined') return 'bad_param';
+      for (var i = 0; i < tabs.length; i++) {
+        if (!tabs[i].active) continue;
+        var s = tabs[i].synth;
+        if (!s || !s.params || s.name !== 'Bfxr') continue;
+        s.apply_params(p, false);
+        tabs[i].update_ui_params();
+        return 'ok';
+      }
+      return 'no_tab';
+    } catch (e) { return String(e); }
+  };
 })();
 )JS";
 }
@@ -53,7 +67,13 @@ void applyBfxr2JsonToApvts (const juce::String& jsonUtf8, juce::AudioProcessorVa
         return;
 
     if (o->hasProperty ("error"))
+    {
+#if JUCE_DEBUG
+        DBG ("applyBfxr2JsonToApvts: error desde web — "
+             << o->getProperty ("error").toString());
+#endif
         return;
+    }
 
     auto setFloat = [&] (const char* id, float v) {
         if (auto* p = apvts.getParameter (id))
@@ -75,7 +95,13 @@ void applyBfxr2JsonToApvts (const juce::String& jsonUtf8, juce::AudioProcessorVa
     };
 
     if (o->hasProperty (juce::Identifier ("waveType")))
-        setInt ("waveType", mapWaveTypeJsToFigBug (juce::roundToInt (getNum ("waveType", 2.f))));
+    {
+        const int mappedWt = mapWaveTypeJsToFigBug (juce::roundToInt (getNum ("waveType", 2.f)));
+#if JUCE_DEBUG
+        jassert (mappedWt >= 0 && mappedWt <= 8);
+#endif
+        setInt ("waveType", mappedWt);
+    }
 
     setFloat ("masterVolume", getNum ("masterVolume", 0.5f));
     setFloat ("attackTime", getNum ("attackTime"));
@@ -116,5 +142,72 @@ void applyBfxr2JsonToApvts (const juce::String& jsonUtf8, juce::AudioProcessorVa
     setFloat ("hpFilterCutoffSweep", getNum ("hpFilterCutoffSweep"));
     setFloat ("bitCrush", getNum ("bitCrush"));
     setFloat ("bitCrushSweep", getNum ("bitCrushSweep"));
+}
+
+static float readApvtsFloat (const juce::AudioProcessorValueTreeState& apvts, const char* id, float fallback = 0.f)
+{
+    if (auto* p = apvts.getParameter (id))
+        if (auto* pf = dynamic_cast<juce::AudioParameterFloat*> (p))
+            return pf->convertFrom0to1 (apvts.getRawParameterValue (id)->load());
+    return fallback;
+}
+
+static int readApvtsIntWave (const juce::AudioProcessorValueTreeState& apvts)
+{
+    if (auto* p = apvts.getParameter ("waveType"))
+        if (auto* pi = dynamic_cast<juce::AudioParameterInt*> (p))
+            return (int) std::lround ((double) pi->convertFrom0to1 (apvts.getRawParameterValue ("waveType")->load()));
+    return 2;
+}
+
+juce::String apvtsToBfxr2JsonString (const juce::AudioProcessorValueTreeState& apvts)
+{
+    juce::DynamicObject::Ptr o = new juce::DynamicObject();
+
+    const int wt = readApvtsIntWave (apvts);
+    o->setProperty ("waveType", wt);
+
+    auto put = [&] (const char* bfxrKey, const char* apvtsId) {
+        o->setProperty (juce::Identifier (bfxrKey), readApvtsFloat (apvts, apvtsId));
+    };
+
+    o->setProperty ("masterVolume", readApvtsFloat (apvts, "masterVolume", 0.5f));
+    put ("attackTime", "attackTime");
+    put ("sustainTime", "sustainTime");
+    put ("sustainPunch", "sustainPunch");
+    put ("decayTime", "decayTime");
+    put ("compressionAmount", "compressionAmount");
+
+    o->setProperty ("frequency_start", readApvtsFloat (apvts, "startFrequency", 0.3f));
+    o->setProperty ("frequency_slide", juce::jlimit (-0.5f, 0.5f, readApvtsFloat (apvts, "slide") * 0.5f));
+    o->setProperty ("frequency_acceleration", readApvtsFloat (apvts, "deltaSlide"));
+    o->setProperty ("min_frequency_relative_to_starting_frequency", readApvtsFloat (apvts, "minFrequency"));
+
+    put ("vibratoDepth", "vibratoDepth");
+    put ("vibratoSpeed", "vibratoSpeed");
+
+    put ("overtones", "overtones");
+    put ("overtoneFalloff", "overtoneFalloff");
+
+    o->setProperty ("pitch_jump_repeat_speed", readApvtsFloat (apvts, "changeRepeat"));
+    o->setProperty ("pitch_jump_amount", readApvtsFloat (apvts, "changeAmount"));
+    o->setProperty ("pitch_jump_onset_percent", readApvtsFloat (apvts, "changeSpeed"));
+    o->setProperty ("pitch_jump_2_amount", readApvtsFloat (apvts, "changeAmount2"));
+    o->setProperty ("pitch_jump_onset2_percent", readApvtsFloat (apvts, "changeSpeed2"));
+
+    put ("squareDuty", "squareDuty");
+    put ("dutySweep", "dutySweep");
+    put ("repeatSpeed", "repeatSpeed");
+    put ("flangerOffset", "flangerOffset");
+    put ("flangerSweep", "flangerSweep");
+    put ("lpFilterCutoff", "lpFilterCutoff");
+    put ("lpFilterCutoffSweep", "lpFilterCutoffSweep");
+    put ("lpFilterResonance", "lpFilterResonance");
+    put ("hpFilterCutoff", "hpFilterCutoff");
+    put ("hpFilterCutoffSweep", "hpFilterCutoffSweep");
+    put ("bitCrush", "bitCrush");
+    put ("bitCrushSweep", "bitCrushSweep");
+
+    return juce::JSON::toString (juce::var (o.get()), false);
 }
 } // namespace bfxr_web

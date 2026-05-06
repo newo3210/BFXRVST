@@ -1,6 +1,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include <cmath>
+
 BfxrAbletonAudioProcessor::BfxrAbletonAudioProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "PARAMS", bfxr::createParameterLayout())
@@ -10,6 +12,12 @@ BfxrAbletonAudioProcessor::BfxrAbletonAudioProcessor()
 void BfxrAbletonAudioProcessor::prepareToPlay (double sampleRate, int)
 {
     synth.setSampleRate ((float) sampleRate);
+
+#if JUCE_DEBUG
+    if (std::abs (sampleRate - 44100.0) > 1.0)
+        DBG ("BfxrAbleton: SR del proyecto " << sampleRate
+                                             << " Hz. El motor FigBug fue calibrado pensando en 44,1 kHz; ver docs/PARITY.md y docs/QA.md.");
+#endif
 }
 
 bool BfxrAbletonAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -87,7 +95,7 @@ void BfxrAbletonAudioProcessor::setStateInformation (const void* data, int sizeI
 void BfxrAbletonAudioProcessor::applyRandomize()
 {
     SfxrParams p;
-    bfxr::apvtsToSfxr (apvts, p);
+    bfxr::prepareSfxrParamsFromApvts (apvts, p);
     p.randomize();
     bfxr::sfxrToApvts (p, apvts);
 }
@@ -95,7 +103,7 @@ void BfxrAbletonAudioProcessor::applyRandomize()
 void BfxrAbletonAudioProcessor::applyMutate (float amount)
 {
     SfxrParams p;
-    bfxr::apvtsToSfxr (apvts, p);
+    bfxr::prepareSfxrParamsFromApvts (apvts, p);
     p.mutate (amount);
     bfxr::sfxrToApvts (p, apvts);
 }

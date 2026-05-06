@@ -1,4 +1,6 @@
 /build/
+/build-ci/
+/packages/
 /out/
 /cmake-build-*/
 CMakeFiles/

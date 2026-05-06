@@ -34,9 +34,11 @@ BfxrWebPanel::BfxrWebPanel (BfxrAbletonAudioProcessor& p)
     addAndMakeVisible (*browser);
 
     addAndMakeVisible (btnImport);
+    addAndMakeVisible (btnPushMotor);
     addAndMakeVisible (btnPlayVst);
 
     btnImport.onClick = [this] { pullParamsFromWeb(); };
+    btnPushMotor.onClick = [this] { pushParamsToWeb(); };
     btnPlayVst.onClick = [this] { processor.triggerPreview(); };
 }
 
@@ -93,7 +95,12 @@ void BfxrWebPanel::pullParamsFromWeb()
 
     browser->evaluateJavascript (script, [this] (const juce::WebBrowserComponent::EvaluationResult& eval) {
         if (eval.getError() != nullptr)
+        {
+#if JUCE_DEBUG
+            DBG ("BfxrWebPanel pullParamsFromWeb: error de evaluacion JS");
+#endif
             return;
+        }
 
         const auto* res = eval.getResult();
         if (res == nullptr || ! res->isString())
@@ -104,6 +111,45 @@ void BfxrWebPanel::pullParamsFromWeb()
             return;
 
         bfxr_web::applyBfxr2JsonToApvts (s, processor.apvts);
+    });
+}
+
+void BfxrWebPanel::pushParamsToWeb()
+{
+    if (browser == nullptr)
+        return;
+
+    injectBridge();
+
+    const juce::String json = bfxr_web::apvtsToBfxr2JsonString (processor.apvts);
+    const juce::String script = juce::String (
+                                   "(function(){ try { "
+                                   "if (typeof window.__bfxrVstApplyParamsObject !== 'function') return 'no_bridge'; "
+                                   "var j = ")
+        + json
+        + "; return window.__bfxrVstApplyParamsObject(j); } catch (e) { return String(e); } })()";
+
+    browser->evaluateJavascript (script, [] (const juce::WebBrowserComponent::EvaluationResult& eval) {
+        if (eval.getError() != nullptr)
+        {
+#if JUCE_DEBUG
+            DBG ("BfxrWebPanel pushParamsToWeb: error de evaluacion JS");
+#endif
+            return;
+        }
+
+        const auto* res = eval.getResult();
+        if (res == nullptr)
+            return;
+
+#if JUCE_DEBUG
+        if (res->isString())
+        {
+            const juce::String r = res->toString();
+            if (r != juce::String ("ok"))
+                DBG ("BfxrWebPanel pushParamsToWeb resultado: " << r);
+        }
+#endif
     });
 }
 
@@ -118,6 +164,7 @@ void BfxrWebPanel::resized()
     auto r = getLocalBounds();
     auto top = r.removeFromTop (36);
     btnImport.setBounds (top.removeFromLeft (220).reduced (4, 4));
+    btnPushMotor.setBounds (top.removeFromLeft (180).reduced (4, 4));
     btnPlayVst.setBounds (top.removeFromLeft (140).reduced (4, 4));
 
     if (browser != nullptr)

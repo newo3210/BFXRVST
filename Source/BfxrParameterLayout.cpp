@@ -26,9 +26,44 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
             layout.add (std::make_unique<juce::AudioParameterFloat> (pid, p.name, range, p.defaultValue,
                                                                      juce::AudioParameterFloatAttributes().withLabel ("")));
         }
+
+        if (p.uid != "masterVolume")
+        {
+            const juce::String lockId = "lock_" + juce::String (p.uid);
+            layout.add (std::make_unique<juce::AudioParameterBool> (juce::ParameterID { lockId, 1 },
+                                                                     "Lock " + p.name,
+                                                                     false));
+        }
     }
 
+    layout.add (std::make_unique<juce::AudioParameterBool> (juce::ParameterID { "rePreview", 1 },
+                                                             "Re-preview al soltar slider",
+                                                             false));
+
     return layout;
+}
+
+static void syncLocksFromApvtsToSfxr (const juce::AudioProcessorValueTreeState& apvts, SfxrParams& p)
+{
+    p.setAllLocked (false);
+    p.setParamLocked ("masterVolume", true);
+
+    SfxrParams prototype;
+    for (const auto& par : prototype.params)
+    {
+        if (par.uid == "masterVolume")
+            continue;
+
+        const juce::String lockId = "lock_" + juce::String (par.uid);
+        if (auto* raw = apvts.getRawParameterValue (lockId))
+            p.setParamLocked (par.uid, raw->load() > 0.5f);
+    }
+}
+
+void prepareSfxrParamsFromApvts (const juce::AudioProcessorValueTreeState& apvts, SfxrParams& out)
+{
+    apvtsToSfxr (apvts, out);
+    syncLocksFromApvtsToSfxr (apvts, out);
 }
 
 void apvtsToSfxr (const juce::AudioProcessorValueTreeState& apvts, SfxrParams& out)

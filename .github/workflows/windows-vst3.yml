@@ -1,0 +1,53 @@
+name: Windows VST3
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: NuGet CLI
+        uses: nuget/setup-nuget@v2
+        with:
+          nuget-version: 6.x
+
+      - name: NuGet WebView2 (SDK para CMake / JUCE)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force packages | Out-Null
+          nuget install Microsoft.Web.WebView2 -OutputDirectory packages -Version 1.0.3485.44
+
+      - name: CMake configure
+        shell: pwsh
+        run: |
+          $wv2 = Join-Path (Get-Location) "packages"
+          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            "-DJUCE_WEBVIEW2_PACKAGE_LOCATION=$wv2"
+
+      - name: CMake build Release
+        run: cmake --build build --config Release --parallel
+
+      - name: Empaquetar VST3 en ZIP
+        shell: pwsh
+        run: |
+          $vst = Get-ChildItem -Path build -Recurse -Filter "Bfxr Ableton.vst3" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -eq $vst) { throw "No se encontro Bfxr Ableton.vst3 bajo build/" }
+          $zip = Join-Path (Get-Location) "BfxrAbleton-VST3-Windows.zip"
+          Compress-Archive -Path $vst.FullName -DestinationPath $zip -Force
+          Write-Host "ZIP: $zip"
+
+      - name: Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: BfxrAbleton-VST3-Windows
+          path: BfxrAbleton-VST3-Windows.zip

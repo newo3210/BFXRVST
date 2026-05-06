@@ -2,7 +2,7 @@
 
 namespace
 {
-constexpr int kEditorMinW = 960;
+constexpr int kEditorMinW = 1040;
 constexpr int kEditorMinH = 640;
 } // namespace
 

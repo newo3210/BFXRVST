@@ -4,7 +4,7 @@ if(NOT WIN32)
     message(FATAL_ERROR "BfxrAbleton: este arbol de CMake esta pensado solo para Windows (VST3 + WebView2).")
 endif()
 
-project(BfxrAbleton VERSION 0.1.0 LANGUAGES CXX)
+project(BfxrAbleton VERSION 0.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -83,5 +83,8 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_SOURCE_DIR}/third_party/bfxr2"
             "$<TARGET_FILE_DIR:BfxrAbleton>/bfxr2web"
-    COMMENT "Copiando bfxr2 (submodulo) junto al binario del plugin para WebView2"
+    COMMAND powershell -NoProfile -ExecutionPolicy Bypass -File
+            "${CMAKE_SOURCE_DIR}/cmake/patch-bfxr2-vst.ps1"
+            "$<TARGET_FILE_DIR:BfxrAbleton>/bfxr2web"
+    COMMENT "Copiando bfxr2 y aplicando parche VST (sin Footsteppr)"
     VERBATIM)

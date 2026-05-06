@@ -18,6 +18,7 @@ private:
 
     std::unique_ptr<juce::WebBrowserComponent> browser;
     juce::TextButton btnImport { "Importar web -> motor VST" };
+    juce::TextButton btnPushMotor { juce::String::fromUTF8 ("Enviar motor \xe2\x86\x92 web") };
     juce::TextButton btnPlayVst { "Play motor VST" };
 
     bool attemptedLoad = false;
@@ -26,6 +27,7 @@ private:
     void tryLoadUrl();
     void injectBridge();
     void pullParamsFromWeb();
+    void pushParamsToWeb();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BfxrWebPanel)
 };
