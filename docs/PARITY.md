@@ -40,6 +40,18 @@ Referencia web: [increpare/bfxr2](https://github.com/increpare/bfxr2) (MIT). Mot
 | **bfxr2-only** | Cualquier sinte o flujo que exista solo en el JS de bfxr2 y no en FigBug requiere porte o doble motor. |
 | **MSVC Release + WebView2** | Si la vista web queda en blanco solo en Release, valorar `/O1` en Windows (ver `docs/RELEASE.md`). |
 
+## External reference: sfxr.me / jsfxr
+
+Classic **sfxr** ([sfxr.me](https://sfxr.me) / [jsfxr](https://github.com/chr15m/jsfxr)) is a **subset** of our FigBug/bfxr parameter set. It is a useful reference for the classic `p_*` fields and for JSON / Base58 interchange with the game-dev ecosystem — **not** a target to shrink the plugin toward.
+
+| Doc | Content |
+|-----|---------|
+| `docs/SFXR_ME_PARAMS.md` | Full catalog of jsfxr Params JSON (`oldParams`), ranges, Base58, presets |
+| `docs/PARAM_GAP_ANALYSIS.md` | Field mapping jsfxr → `SfxrParams` uids (equivalent / subset / missing) |
+| `docs/PRODUCT_IDEA.md` | Product vision: Bfxr-complete VST3; optional future jsfxr import |
+
+Primary UI/motor parity remains **FigBug/bfxr + embedded bfxr2** (see sections above).
+
 ## Cómo seguir el checklist
 
 1. Ejecutar bfxr2 en local y enumerar pantallas y acciones (solo **Bfxr** en build empaquetada).
