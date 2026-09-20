@@ -1,0 +1,1 @@
+C:/Users/Administrador/projects/BFXRVST/ai-specs/agents/frontend-developer.md

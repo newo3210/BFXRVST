@@ -71,12 +71,17 @@ Tras compilar, CMake copia `third_party/bfxr2` a `bfxr2web` junto al `.dll` del 
 
 | Archivo | Contenido |
 |---------|-----------|
+| `ARCHITECTURE_SDD.md` | Contrato técnico de arquitectura (capas, flujos) |
+| `STUDENT_DECISION_LOG.md` | Bitácora de decisiones (ES) |
+| `docs/base-standards.md` | Reglas SDD + capas de este repo |
 | `docs/PARITY.md` | Paridad web ↔ motor, criterios de OK, bridges; referencia sfxr.me / jsfxr |
 | `docs/PRODUCT_IDEA.md` | Visión de producto (VST3 Bfxr-complete; rol de sfxr.me) |
 | `docs/SFXR_ME_PARAMS.md` | Catálogo de Params JSON de jsfxr / sfxr.me (rangos, Base58, presets) |
 | `docs/PARAM_GAP_ANALYSIS.md` | Mapeo jsfxr ↔ `SfxrParams` (equivalente / subset / missing) |
 | `docs/QA.md` | Checklist previa a release |
 | `docs/RELEASE.md` | CI, NuGet, instalación, notas MSVC/WebView2 |
+
+Orquestación de features: **`/director`** (OpenSpec asistido en `openspec/` + skills en `ai-specs/`).
 
 ## CI
 
